@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 // Variables used for command line parameters
@@ -58,23 +57,7 @@ func main() {
 
 	dg.AddHandler(Ready)
 
-	dg.AddHandler(func(s *discordgo.Session, r *discordgo.GuildMemberAdd) {
-		createdAt, err := discordgo.SnowflakeTimestamp(r.Member.User.ID)
-		if err != nil {
-			fmt.Println("error getting user creation time,", err)
-			return
-		}
-		// print the number of hours since the account was created
-		hoursSinceCreation := int64(time.Now().Sub(createdAt).Hours())
-		if hoursSinceCreation < 48 {
-			// Ban the user
-			err := s.GuildBanCreateWithReason(r.GuildID, r.Member.User.ID, "Hades Ban", 0)
-			if err != nil {
-				fmt.Println("error banning user,", err)
-				return
-			}
-		}
-	})
+	dg.AddHandler(FilterUsers)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -82,6 +65,8 @@ func main() {
 		fmt.Println("error opening connection,", err)
 		return
 	}
+
+	go RainbowRole(dg)
 
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
